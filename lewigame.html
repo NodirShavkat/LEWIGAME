@@ -1,0 +1,973 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vocabulary Games Hub</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        /* MENU SAHIFASI */
+        #menu-screen {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 80vh;
+        }
+
+        .menu-title {
+            color: white;
+            font-size: 3em;
+            margin-bottom: 50px;
+            text-shadow: 3px 3px 6px rgba(0,0,0,0.3);
+        }
+
+        .game-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 30px;
+            max-width: 1000px;
+            width: 100%;
+        }
+
+        .game-card {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+
+        .game-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 15px 40px rgba(0,0,0,0.3);
+        }
+
+        .game-card .icon {
+            font-size: 4em;
+            margin-bottom: 20px;
+        }
+
+        .game-card h2 {
+            color: #667eea;
+            margin-bottom: 15px;
+            font-size: 1.8em;
+        }
+
+        .game-card p {
+            color: #666;
+            line-height: 1.6;
+        }
+
+        /* O'YIN EKRANLARI */
+        .game-screen {
+            display: none;
+        }
+
+        .game-screen.active {
+            display: block;
+        }
+
+        .back-button {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            background: white;
+            color: #667eea;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 1em;
+            font-weight: bold;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+            z-index: 1000;
+        }
+
+        .back-button:hover {
+            transform: scale(1.05);
+        }
+
+        /* PAC-MAN O'YIN */
+        #pacman-game {
+            max-width: 900px;
+            margin: 0 auto;
+            background: #1a1a2e;
+            border-radius: 20px;
+            padding: 30px;
+        }
+
+        .pacman-title {
+            text-align: center;
+            color: #00ffff;
+            margin-bottom: 20px;
+            font-size: 2em;
+        }
+
+        .word-display {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 15px;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .word-display .word {
+            font-size: 2.5em;
+            font-weight: bold;
+        }
+
+        .game-info {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 15px;
+            color: #00ffff;
+        }
+
+        #maze {
+            display: grid;
+            gap: 0;
+            background: #000;
+            padding: 3px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            border: 3px solid #0066cc;
+        }
+
+        .cell {
+            aspect-ratio: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.7em;
+            font-weight: bold;
+        }
+
+        .wall { background: #0066cc; border: 1px solid #0088ff; }
+        .path { background: #000; position: relative; }
+        .path::after {
+            content: '·';
+            color: #ffb8ae;
+            font-size: 1.5em;
+            position: absolute;
+        }
+        .path.eaten::after { display: none; }
+        .player {
+            background: #000;
+            z-index: 10;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .player::before {
+            content: '';
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background-image: url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgdmlld0JveD0iMCAwIDIwMCAyMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxjaXJjbGUgY3g9IjEwMCIgY3k9IjEwMCIgcj0iOTUiIGZpbGw9IiNGRkQ3MDAiIHN0cm9rZT0iYmxhY2siIHN0cm9rZS13aWR0aD0iOCIvPgo8Y2lyY2xlIGN4PSIxMDAiIGN5PSI3MCIgcj0iMTIiIGZpbGw9ImJsYWNrIi8+CjxwYXRoIGQ9Ik0gMTAwIDEwMCBMIDE4MCAxNDAgTCAxODAgNjAgWiIgZmlsbD0iYmxhY2siLz4KPC9zdmc+');
+            background-size: contain;
+            background-repeat: no-repeat;
+            background-position: center;
+            transition: transform 0.1s;
+        }
+
+        .player.right::before { transform: rotate(0deg); }
+        .player.left::before { transform: rotate(180deg); }
+        .player.up::before { transform: rotate(-90deg); }
+        .player.down::before { transform: rotate(90deg); }
+        .enemy { background: #000; font-size: 1.6em; z-index: 9; }
+        .exit {
+            background: #000;
+            color: white;
+            font-size: 0.65em;
+            border: 2px solid #00ff00;
+            padding: 4px;
+        }
+        .exit.wrong { border-color: #ff4444; }
+
+        /* RACING O'YIN */
+        #racing-game {
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .racing-container {
+            background: white;
+            border-radius: 20px;
+            padding: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+
+        .racing-title {
+            text-align: center;
+            color: #667eea;
+            font-size: 2em;
+            margin-bottom: 20px;
+        }
+
+        .word-info {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 15px;
+            margin-bottom: 20px;
+        }
+
+        .word-info .english-word {
+            font-size: 2em;
+            font-weight: bold;
+            text-align: center;
+            margin-bottom: 15px;
+        }
+
+        .word-boxes {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .letter-box {
+            width: 50px;
+            height: 50px;
+            border: 3px solid white;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.8em;
+            font-weight: bold;
+            background: rgba(255,255,255,0.2);
+        }
+
+        .letter-box.filled {
+            background: rgba(255,255,255,0.9);
+            color: #667eea;
+        }
+
+        .racing-stats {
+            display: flex;
+            justify-content: space-around;
+            margin-bottom: 20px;
+            padding: 15px;
+            background: #f0f0f0;
+            border-radius: 10px;
+        }
+
+        .stat {
+            text-align: center;
+        }
+
+        .stat-label {
+            color: #666;
+            font-size: 0.9em;
+        }
+
+        .stat-value {
+            font-size: 1.5em;
+            font-weight: bold;
+            color: #667eea;
+        }
+
+        .lives {
+            color: #ff4444;
+        }
+
+        #race-track {
+            width: 100%;
+            height: 500px;
+            background: linear-gradient(180deg, #87CEEB 0%, #87CEEB 30%, #555 30%, #555 100%);
+            border-radius: 15px;
+            position: relative;
+            overflow: hidden;
+            border: 4px solid #333;
+        }
+
+        .road-line {
+            position: absolute;
+            width: 8px;
+            height: 60px;
+            background: white;
+            left: 50%;
+            transform: translateX(-50%);
+            animation: moveLine 1s linear infinite;
+        }
+
+        @keyframes moveLine {
+            from { top: -60px; }
+            to { top: 500px; }
+        }
+
+        .lane {
+            position: absolute;
+            width: 33.33%;
+            height: 100%;
+            top: 30%;
+        }
+
+        .lane:nth-child(1) { left: 0; }
+        .lane:nth-child(2) { left: 33.33%; }
+        .lane:nth-child(3) { left: 66.66%; }
+
+        .car {
+            position: absolute;
+            bottom: 50px;
+            font-size: 3em;
+            left: 50%;
+            transform: translateX(-50%);
+            transition: left 0.2s;
+            z-index: 100;
+        }
+
+        .letter-item {
+            position: absolute;
+            width: 60px;
+            height: 60px;
+            background: white;
+            border: 3px solid #667eea;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2em;
+            font-weight: bold;
+            color: #667eea;
+            animation: fall 3s linear;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+
+        .letter-item.wrong {
+            border-color: #ff4444;
+            color: #ff4444;
+        }
+
+        @keyframes fall {
+            from { top: 30%; }
+            to { top: 100%; }
+        }
+
+        .racing-controls {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .racing-controls button {
+            padding: 15px 30px;
+            font-size: 1.2em;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            background: #667eea;
+            color: white;
+            font-weight: bold;
+        }
+
+        .racing-controls button:hover {
+            background: #5568d3;
+        }
+
+        /* GAME OVER */
+        #game-over {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.9);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        #game-over.show {
+            display: flex;
+        }
+
+        .game-over-content {
+            background: white;
+            padding: 40px;
+            border-radius: 20px;
+            text-align: center;
+            max-width: 400px;
+        }
+
+        .game-over-content h2 {
+            font-size: 2em;
+            margin-bottom: 15px;
+        }
+
+        .game-over-content.win h2 {
+            color: #00ff00;
+        }
+
+        .game-over-content.lose h2 {
+            color: #ff4444;
+        }
+
+        .game-over-content button {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 15px 40px;
+            border-radius: 25px;
+            font-size: 1.1em;
+            cursor: pointer;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <!-- MENU SAHIFASI -->
+    <div id="menu-screen">
+        <h1 class="menu-title">🎮 Vocabulary Games</h1>
+        <div class="game-cards">
+            <div class="game-card" onclick="selectGame('pacman')">
+                <div class="icon">🟡</div>
+                <h2>PAC-MAZE</h2>
+                <p>Klassik Pac-Man labirintida so'zlarni o'rganing. Arvohlardan qoching va to'g'ri tarjimani toping!</p>
+            </div>
+            <div class="game-card" onclick="selectGame('racing')">
+                <div class="icon">🚗</div>
+                <h2>WORD RACER</h2>
+                <p>Poyga o'yini! Harflarni yig'ib so'z yasang. 3 ta yo'lakdan to'g'ri harfni tanlang!</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- PAC-MAN O'YIN -->
+    <div id="pacman-game" class="game-screen">
+        <button class="back-button" onclick="backToMenu()">← Orqaga</button>
+        <h1 class="pacman-title">🟡 PAC-MAZE</h1>
+        <div class="word-display">
+            <div class="word" id="pacman-word">APPLE</div>
+        </div>
+        <div class="game-info">
+            <span>⌨️ O'q tugmalari</span>
+            <span>🏆 Ball: <span id="pacman-score">0</span></span>
+        </div>
+        <div id="maze"></div>
+    </div>
+
+    <!-- RACING O'YIN -->
+    <div id="racing-game" class="game-screen">
+        <button class="back-button" onclick="backToMenu()">← Orqaga</button>
+        <div class="racing-container">
+            <h1 class="racing-title">🚗 WORD RACER</h1>
+            
+            <div class="word-info">
+                <div class="english-word" id="racing-word">APPLE</div>
+                <div class="word-boxes" id="word-boxes"></div>
+            </div>
+
+            <div class="racing-stats">
+                <div class="stat">
+                    <div class="stat-label">Ball</div>
+                    <div class="stat-value" id="racing-score">0</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-label">Jonlar</div>
+                    <div class="stat-value lives" id="racing-lives">❤️❤️❤️</div>
+                </div>
+            </div>
+
+            <div id="race-track">
+                <div class="road-line" style="animation-delay: 0s;"></div>
+                <div class="road-line" style="animation-delay: 0.33s;"></div>
+                <div class="road-line" style="animation-delay: 0.66s;"></div>
+                <div class="car" id="player-car">🚗</div>
+            </div>
+
+            <div class="racing-controls">
+                <button onclick="moveCarRacing(-1)">◄ Chap</button>
+                <button onclick="moveCarRacing(1)">O'ng ►</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- GAME OVER -->
+    <div id="game-over">
+        <div class="game-over-content" id="game-over-content">
+            <h2 id="result-text">You Win!</h2>
+            <p id="result-message"></p>
+            <button onclick="restartCurrentGame()">🔄 Qayta o'ynash</button>
+            <button onclick="backToMenu()" style="background: #999; margin-left: 10px;">🏠 Menu</button>
+        </div>
+    </div>
+
+    <script>
+        // So'zlar bazasi
+        const words = [
+            { en: "apple", uz: "olma", options: ["olma", "suv", "kitob", "mashina"] },
+            { en: "water", uz: "suv", options: ["kitob", "suv", "uy", "qalam"] },
+            { en: "book", uz: "kitob", options: ["stol", "deraza", "kitob", "eshik"] },
+            { en: "house", uz: "uy", options: ["uy", "ko'cha", "bog'", "daryo"] },
+            { en: "cat", uz: "mushuk", options: ["it", "mushuk", "qush", "baliq"] }
+        ];
+
+        let currentGame = '';
+        let currentWordData = null;
+
+        // O'YIN TANLASH
+        function selectGame(game) {
+            document.getElementById('menu-screen').style.display = 'none';
+            currentGame = game;
+            
+            if (game === 'pacman') {
+                document.getElementById('pacman-game').classList.add('active');
+                startPacmanGame();
+            } else if (game === 'racing') {
+                document.getElementById('racing-game').classList.add('active');
+                startRacingGame();
+            }
+        }
+
+        function backToMenu() {
+            document.querySelectorAll('.game-screen').forEach(screen => {
+                screen.classList.remove('active');
+            });
+            document.getElementById('menu-screen').style.display = 'flex';
+            document.getElementById('game-over').classList.remove('show');
+            
+            // O'yinlarni to'xtatish
+            if (pacmanInterval) clearInterval(pacmanInterval);
+            if (racingInterval) clearInterval(racingInterval);
+            pacmanRunning = false;
+            racingRunning = false;
+        }
+
+        function restartCurrentGame() {
+            document.getElementById('game-over').classList.remove('show');
+            if (currentGame === 'pacman') {
+                startPacmanGame();
+            } else if (currentGame === 'racing') {
+                startRacingGame();
+            }
+        }
+
+        // ============ PAC-MAN O'YIN ============
+        let mazeSize = 21;
+        let maze = [];
+        let playerPos = { x: 7, y: 7 };
+        let playerDirection = 'right'; // Pac-Man yo'nalishi
+        let enemies = [];
+        let exits = [];
+        let pacmanRunning = false;
+        let pacmanInterval;
+        let pacmanScore = 0;
+        let dots = [];
+
+        function startPacmanGame() {
+            pacmanRunning = true;
+            pacmanScore = 0;
+            playerDirection = 'right'; // Boshlang'ich yo'nalish
+            currentWordData = words[Math.floor(Math.random() * words.length)];
+            
+            document.getElementById('pacman-word').textContent = currentWordData.en.toUpperCase();
+            document.getElementById('pacman-score').textContent = pacmanScore;
+            
+            createPacmanMaze();
+            drawMaze();
+            
+            if (pacmanInterval) clearInterval(pacmanInterval);
+            pacmanInterval = setInterval(moveEnemies, 500);
+        }
+
+        function createPacmanMaze() {
+            maze = [];
+            dots = [];
+            
+            // Juda murakkab labirint - 21x21 o'lcham
+            const template = [
+                [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+                [0,1,1,1,0,1,1,1,0,1,1,1,0,1,1,1,0,1,1,1,0],
+                [0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0],
+                [0,1,0,1,1,1,0,1,1,1,0,1,1,1,0,1,1,1,0,1,0],
+                [0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0],
+                [0,1,1,1,0,1,1,1,0,1,1,1,0,1,1,1,0,1,1,1,0],
+                [0,0,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,0,0],
+                [0,1,0,1,1,1,0,1,1,1,0,1,1,1,0,1,1,1,0,1,0],
+                [0,1,0,0,0,1,0,0,0,0,0,0,0,0,0,1,0,0,0,1,0],
+                [0,1,1,1,0,1,1,1,0,1,1,1,0,1,1,1,0,1,1,1,0],
+                [0,0,0,1,0,0,0,1,0,1,0,1,0,1,0,0,0,1,0,0,0],
+                [0,1,1,1,1,1,0,1,1,1,0,1,1,1,0,1,1,1,1,1,0],
+                [0,1,0,0,0,1,0,0,0,1,0,1,0,0,0,1,0,0,0,1,0],
+                [0,1,0,1,1,1,1,1,0,1,1,1,0,1,1,1,1,1,0,1,0],
+                [0,1,0,1,0,0,0,1,0,0,0,0,0,1,0,0,0,1,0,1,0],
+                [0,1,1,1,0,1,1,1,1,1,0,1,1,1,1,1,0,1,1,1,0],
+                [0,0,0,0,0,1,0,0,0,1,0,1,0,0,0,1,0,0,0,0,0],
+                [0,1,1,1,1,1,1,1,0,1,1,1,0,1,1,1,1,1,1,1,0],
+                [0,1,0,0,0,0,0,1,0,0,0,0,0,1,0,0,0,0,0,1,0],
+                [0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0],
+                [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
+            ];
+
+            for (let y = 0; y < mazeSize; y++) {
+                maze[y] = [];
+                for (let x = 0; x < mazeSize; x++) {
+                    maze[y][x] = template[y][x];
+                    if (maze[y][x] === 1) {
+                        dots.push({ x, y, eaten: false });
+                    }
+                }
+            }
+
+            playerPos = { x: 10, y: 10 };
+
+            exits = currentWordData.options.map((opt, i) => {
+                const positions = [
+                    { x: 1, y: 1 },
+                    { x: 19, y: 1 },
+                    { x: 1, y: 19 },
+                    { x: 19, y: 19 }
+                ];
+                return {
+                    ...positions[i],
+                    word: opt,
+                    correct: opt === currentWordData.uz
+                };
+            });
+
+            enemies = [
+                { x: 3, y: 3, dx: 1, dy: 0 },
+                { x: 17, y: 3, dx: -1, dy: 0 },
+                { x: 3, y: 17, dx: 1, dy: 0 },
+                { x: 17, y: 17, dx: -1, dy: 0 },
+                { x: 10, y: 5, dx: 0, dy: 1 },
+                { x: 10, y: 15, dx: 0, dy: -1 }
+            ];
+        }
+
+        function drawMaze() {
+            const mazeEl = document.getElementById('maze');
+            mazeEl.style.gridTemplateColumns = `repeat(${mazeSize}, 22px)`;
+            mazeEl.innerHTML = '';
+
+            for (let y = 0; y < mazeSize; y++) {
+                for (let x = 0; x < mazeSize; x++) {
+                    const cell = document.createElement('div');
+                    cell.className = 'cell';
+
+                    const exit = exits.find(e => e.x === x && e.y === y);
+                    if (exit) {
+                        cell.classList.add('exit');
+                        if (!exit.correct) cell.classList.add('wrong');
+                        cell.textContent = exit.word;
+                    } else if (x === playerPos.x && y === playerPos.y) {
+                        cell.classList.add('player');
+                        cell.classList.add(playerDirection);
+                    } else if (enemies.find(e => e.x === x && e.y === y)) {
+                        cell.classList.add('enemy');
+                        cell.textContent = '👻';
+                    } else if (maze[y][x] === 0) {
+                        cell.classList.add('wall');
+                    } else {
+                        cell.classList.add('path');
+                        const dot = dots.find(d => d.x === x && d.y === y);
+                        if (dot && dot.eaten) cell.classList.add('eaten');
+                    }
+
+                    mazeEl.appendChild(cell);
+                }
+            }
+        }
+
+        function movePacman(dx, dy) {
+            if (!pacmanRunning) return;
+
+            const newX = playerPos.x + dx;
+            const newY = playerPos.y + dy;
+
+            if (newX < 0 || newX >= mazeSize || newY < 0 || newY >= mazeSize) return;
+            if (maze[newY][newX] === 0) return;
+
+            // Yo'nalishni yangilash
+            if (dx === 1) playerDirection = 'right';
+            else if (dx === -1) playerDirection = 'left';
+            else if (dy === -1) playerDirection = 'up';
+            else if (dy === 1) playerDirection = 'down';
+
+            playerPos.x = newX;
+            playerPos.y = newY;
+
+            const dot = dots.find(d => d.x === newX && d.y === newY && !d.eaten);
+            if (dot) {
+                dot.eaten = true;
+                pacmanScore += 10;
+                document.getElementById('pacman-score').textContent = pacmanScore;
+            }
+
+            const exit = exits.find(e => e.x === newX && e.y === newY);
+            if (exit) {
+                endGame(exit.correct, pacmanScore);
+                return;
+            }
+
+            if (enemies.find(e => e.x === newX && e.y === newY)) {
+                endGame(false, pacmanScore);
+                return;
+            }
+
+            drawMaze();
+        }
+
+        function moveEnemies() {
+            if (!pacmanRunning) return;
+
+            enemies.forEach(enemy => {
+                const directions = [
+                    { dx: 1, dy: 0 }, { dx: -1, dy: 0 },
+                    { dx: 0, dy: 1 }, { dx: 0, dy: -1 }
+                ];
+
+                let validMoves = directions.filter(dir => {
+                    const newX = enemy.x + dir.dx;
+                    const newY = enemy.y + dir.dy;
+                    return newX >= 0 && newX < mazeSize && 
+                           newY >= 0 && newY < mazeSize && 
+                           maze[newY][newX] !== 0;
+                });
+
+                if (validMoves.length > 0) {
+                    const move = validMoves[Math.floor(Math.random() * validMoves.length)];
+                    enemy.x += move.dx;
+                    enemy.y += move.dy;
+                }
+
+                if (enemy.x === playerPos.x && enemy.y === playerPos.y) {
+                    endGame(false, pacmanScore);
+                }
+            });
+
+            drawMaze();
+        }
+
+        // ============ RACING O'YIN ============
+        let carLane = 1; // 0, 1, 2
+        let racingScore = 0;
+        let racingLives = 3;
+        let racingRunning = false;
+        let racingInterval;
+        let collectedLetters = [];
+        let currentLetterIndex = 0;
+
+        function startRacingGame() {
+            racingRunning = true;
+            racingScore = 0;
+            racingLives = 3;
+            carLane = 1;
+            collectedLetters = [];
+            currentLetterIndex = 0;
+            
+            currentWordData = words[Math.floor(Math.random() * words.length)];
+            
+            document.getElementById('racing-word').textContent = currentWordData.en.toUpperCase();
+            document.getElementById('racing-score').textContent = racingScore;
+            updateLives();
+            createWordBoxes();
+            updateCarPosition();
+            
+            if (racingInterval) clearInterval(racingInterval);
+            racingInterval = setInterval(spawnLetters, 2000);
+        }
+
+        function createWordBoxes() {
+            const boxesContainer = document.getElementById('word-boxes');
+            boxesContainer.innerHTML = '';
+            
+            for (let i = 0; i < currentWordData.uz.length; i++) {
+                const box = document.createElement('div');
+                box.className = 'letter-box';
+                box.id = `box-${i}`;
+                boxesContainer.appendChild(box);
+            }
+        }
+
+        function updateLives() {
+            const hearts = '❤️'.repeat(racingLives);
+            document.getElementById('racing-lives').textContent = hearts || '💀';
+        }
+
+        function updateCarPosition() {
+            const car = document.getElementById('player-car');
+            const positions = ['16.66%', '50%', '83.33%'];
+            car.style.left = positions[carLane];
+        }
+
+        function moveCarRacing(direction) {
+            carLane += direction;
+            if (carLane < 0) carLane = 0;
+            if (carLane > 2) carLane = 2;
+            updateCarPosition();
+        }
+
+        function spawnLetters() {
+            if (!racingRunning) return;
+
+            const track = document.getElementById('race-track');
+            const uzbekWord = currentWordData.uz;
+            
+            if (currentLetterIndex >= uzbekWord.length) {
+                // So'z to'ldi - g'alaba
+                endGame(true, racingScore);
+                return;
+            }
+
+            const correctLetter = uzbekWord[currentLetterIndex];
+            const wrongLetters = 'abdefghijklmnopqrstuvwxyz'.split('')
+                .filter(l => l !== correctLetter);
+            
+            const letters = [correctLetter];
+            for (let i = 0; i < 2; i++) {
+                letters.push(wrongLetters[Math.floor(Math.random() * wrongLetters.length)]);
+            }
+            
+            // Tasodifiy aralashtirish
+            letters.sort(() => Math.random() - 0.5);
+
+            letters.forEach((letter, laneIndex) => {
+                const letterEl = document.createElement('div');
+                letterEl.className = 'letter-item';
+                letterEl.textContent = letter.toUpperCase();
+                letterEl.dataset.letter = letter;
+                letterEl.dataset.lane = laneIndex;
+                
+                if (letter !== correctLetter) {
+                    letterEl.classList.add('wrong');
+                }
+
+                const positions = ['16.66%', '50%', '83.33%'];
+                letterEl.style.left = positions[laneIndex];
+
+                track.appendChild(letterEl);
+
+                setTimeout(() => {
+                    checkCollision(letterEl, laneIndex, letter);
+                }, 2500);
+
+                setTimeout(() => {
+                    if (letterEl.parentNode) {
+                        letterEl.remove();
+                    }
+                }, 3000);
+            });
+        }
+
+        function checkCollision(letterEl, lane, letter) {
+            if (!racingRunning) return;
+            
+            if (lane === carLane) {
+                const correctLetter = currentWordData.uz[currentLetterIndex];
+                
+                if (letter === correctLetter) {
+                    // To'g'ri harf
+                    collectedLetters.push(letter);
+                    document.getElementById(`box-${currentLetterIndex}`).textContent = letter.toUpperCase();
+                    document.getElementById(`box-${currentLetterIndex}`).classList.add('filled');
+                    currentLetterIndex++;
+                    racingScore += 100;
+                    document.getElementById('racing-score').textContent = racingScore;
+                    
+                    letterEl.style.background = '#00ff00';
+                    letterEl.style.transform = 'scale(1.5)';
+                } else {
+                    // Noto'g'ri harf - hammasini o'chirish
+                    racingLives--;
+                    updateLives();
+                    
+                    collectedLetters = [];
+                    currentLetterIndex = 0;
+                    
+                    // Barcha boxlarni tozalash
+                    document.querySelectorAll('.letter-box').forEach(box => {
+                        box.textContent = '';
+                        box.classList.remove('filled');
+                    });
+                    
+                    letterEl.style.background = '#ff0000';
+                    
+                    if (racingLives <= 0) {
+                        endGame(false, racingScore);
+                    }
+                }
+            }
+        }
+
+        // GAME OVER
+        function endGame(win, score) {
+            pacmanRunning = false;
+            racingRunning = false;
+            
+            if (pacmanInterval) clearInterval(pacmanInterval);
+            if (racingInterval) clearInterval(racingInterval);
+
+            const gameOverEl = document.getElementById('game-over');
+            const contentEl = document.getElementById('game-over-content');
+            const resultText = document.getElementById('result-text');
+            const resultMessage = document.getElementById('result-message');
+
+            if (win) {
+                contentEl.className = 'game-over-content win';
+                resultText.textContent = '🎉 G\'alaba!';
+                resultMessage.textContent = `To'g'ri! Ball: ${score}`;
+            } else {
+                contentEl.className = 'game-over-content lose';
+                resultText.textContent = '😢 Game Over';
+                resultMessage.textContent = `Ball: ${score}`;
+            }
+
+            gameOverEl.classList.add('show');
+        }
+
+        // KLAVIATURA
+        document.addEventListener('keydown', (e) => {
+            if (currentGame === 'pacman' && pacmanRunning) {
+                switch(e.key) {
+                    case 'ArrowUp':
+                        e.preventDefault();
+                        movePacman(0, -1);
+                        break;
+                    case 'ArrowDown':
+                        e.preventDefault();
+                        movePacman(0, 1);
+                        break;
+                    case 'ArrowLeft':
+                        e.preventDefault();
+                        movePacman(-1, 0);
+                        break;
+                    case 'ArrowRight':
+                        e.preventDefault();
+                        movePacman(1, 0);
+                        break;
+                }
+            } else if (currentGame === 'racing' && racingRunning) {
+                if (e.key === 'ArrowLeft') {
+                    e.preventDefault();
+                    moveCarRacing(-1);
+                } else if (e.key === 'ArrowRight') {
+                    e.preventDefault();
+                    moveCarRacing(1);
+                }
+            }
+        });
+    </script>
+</body>
+</html>
